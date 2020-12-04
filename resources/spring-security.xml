@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+    					http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+                        http://www.springframework.org/schema/security
+                        http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+	<!-- <debug /> -->
+	<beans:bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<beans:property name="basename" value="classpath:org/springframework/security/messages_zh_CN" />
+	</beans:bean>
+	<beans:bean id="passwordEncoder" class="org.springframework.security.authentication.encoding.Md5PasswordEncoder" />
+	<!-- 开放访问资源 -->
+	<http pattern="/pc/login.jsp*" security="none" />
+	<http pattern="/theme/**" security="none" />
+	<http pattern="/favicon.ico" security="none"/>
+    <http pattern="/wx/**" security="none"/>
+    <http pattern="/pc/**" security="none"/>
+    <http pattern="/files/**" security="none"/>
+	 <http pattern="/js/**" security="none"/>
+ 
+
+    <!-- 前台 start -->
+	<http access-denied-page="/tips/403.jsp"  pattern="/admin_back/**" use-expressions="true" entry-point-ref="authenticationProcessingFilterEntryPoint">
+		<intercept-url pattern="/admin_back/**" access="isAuthenticated()" />
+		<logout invalidate-session="true" logout-success-url="/logout"	logout-url="/admin_back/j_spring_security_logout" />
+		<custom-filter ref="concurrencyFilter" position="CONCURRENT_SESSION_FILTER"/>
+		<custom-filter ref="loginFilter" position="FORM_LOGIN_FILTER" />
+		
+		<session-management session-authentication-strategy-ref="sas" />
+		<http-basic />
+	</http>
+	
+	<!-- 前台会话处理 start -->
+	<beans:bean id="concurrencyFilter" class="org.springframework.security.web.session.ConcurrentSessionFilter">
+		<beans:property name="sessionRegistry" ref="sessionRegistry" />
+		<beans:property name="expiredUrl" value="/pc/login.jsp" />
+	</beans:bean>
+	<!-- 前台会话处理 end -->
+	
+	
+	
+	<!-- session管理 -->
+	<beans:bean id="sas"
+		class="org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy">
+		<beans:constructor-arg>
+			<beans:list>
+				<beans:bean
+					class="org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy">
+					<beans:constructor-arg ref="sessionRegistry" />
+					<beans:property name="maximumSessions" value="10" />
+					<beans:property name="exceptionIfMaximumExceeded" value="false" />
+				</beans:bean>
+				<beans:bean
+					class="org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy">
+				</beans:bean>
+				<beans:bean
+					class="org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy">
+					<beans:constructor-arg ref="sessionRegistry" />
+				</beans:bean>
+			</beans:list>
+		</beans:constructor-arg>
+	</beans:bean>
+
+	<!-- session注册处理 -->
+	<beans:bean id="sessionRegistry" class="org.springframework.security.core.session.SessionRegistryImpl" />
+
+
+	<!-- 前台登录验证器 -->
+	<beans:bean id="loginFilter" class="com.twi.security.LoginUsernamePasswordAuthenticationFilter">
+		<!-- 处理登录的action -->
+		<beans:property name="filterProcessesUrl" value="/admin_back/j_spring_security_check"/>
+		<!-- 验证成功后的处理 -->
+		<beans:property name="authenticationSuccessHandler" ref="loginLogAuthenticationSuccessHandler"/>
+		<!-- 验证失败后的处理 -->
+		<beans:property name="authenticationFailureHandler" ref="simpleUrlAuthenticationFailureHandler"/>
+		<beans:property name="sessionAuthenticationStrategy" ref="sas" />
+		<beans:property name="authenticationManager" ref="authenticationManager"/>
+	</beans:bean>
+
+	<!-- 登录成功的切入点 -->
+	<beans:bean id="loginLogAuthenticationSuccessHandler" class="com.twi.security.LoginSuccessHandler">
+		<beans:property name="defaultTargetUrl" value="/index"></beans:property>
+		<beans:property name="alwaysUseDefaultTargetUrl" value="true"></beans:property>
+	</beans:bean>
+	
+	
+
+    <!-- 登录失败的切入点 --> 
+	<beans:bean id="simpleUrlAuthenticationFailureHandler" class="com.twi.security.LoginFailureHandler">
+		<!-- 可以配置相应的跳转方式。属性forwardToDestination为true采用forward false为sendRedirect -->
+		<beans:property name="defaultFailureUrl" value="/pc/login.jsp?login_error=1"></beans:property>
+	</beans:bean>
+	
+  
+	<!--未登录的切入点 -->
+	<beans:bean id="authenticationProcessingFilterEntryPoint"
+		class="org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint">
+		<beans:property name="loginFormUrl" value="/pc/login.jsp"></beans:property>
+	</beans:bean>
+
+	
+
+	<!--管理用户验证管理bean -->
+	<authentication-manager alias="authenticationManager">
+		<authentication-provider user-service-ref="UserDetailsService">
+			
+		</authentication-provider>
+	</authentication-manager>
+
+	
+
+
+	<global-method-security secured-annotations="enabled" jsr250-annotations="enabled" />
+</beans:beans>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context-4.0.xsd
+	http://www.springframework.org/schema/mvc
+	http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+	http://www.springframework.org/schema/util
+    http://www.springframework.org/schema/util/spring-util-4.0.xsd">
+
+
+
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	 <property name="prefix" value="/WEB-INF/ctoms/" />
+		<property name="suffix" value=".jsp" />
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView" />
+	</bean>
+
+	<!-- 使用annotation 自动注册bean,并保证@Required,@Autowired的属性被注入 -->
+	<context:component-scan base-package="com.twi" />
+
+	<mvc:annotation-driven />
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+			<bean class="com.twi.security.event.TokenInterceptor"/> 
+		</mvc:interceptor>
+	</mvc:interceptors>
+	<mvc:resources location="/theme/" mapping="/theme/**" />
+	<mvc:resources location="/pc/" mapping="/pc/**" />
+	<mvc:resources location="/wx/" mapping="/wx/**" />
+	<mvc:resources location="/files/" mapping="/files/**" />
+	<mvc:resources location="/js/" mapping="/js/**" />
+</beans>

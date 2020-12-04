@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:tx="http://www.springframework.org/schema/tx"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-2.5.xsd 
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.0.xsd"
+	   default-autowire="byName" default-lazy-init="true">
+
+	<description>Spring定时任务配置 </description>
+	<bean name="quartzScheduler" lazy-init="false"
+		  class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<!-- 必须，QuartzScheduler 延时启动，应用启动后 QuartzScheduler 再启动 -->
+		<property name="startupDelay" value="1" />
+		<!-- 普通触发器 ：触发器列表(可以配置多个触发器) -->
+		<property name="triggers">
+			<list>
+				<ref bean="orderHandleTrigger" />
+				<ref bean="statHandleTrigger" />
+				<ref bean="billHandleTrigger" />
+				<ref bean="checkPayDateTrigger" />
+			</list>
+		</property>
+	</bean>
+
+	<!-- 配置触发器 与job一对一  -->
+	<bean id="orderHandleTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="orderHandleJob" />
+		<property name="cronExpression" value="0 0/1 * * * ? " />
+	</bean>
+
+	<!-- 配置执行定时任务的类和方法 job -->
+	<bean id="orderHandleJob"
+		  class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<bean class="com.twi.common.quartz.OrderHandleJob" />
+		</property>
+		<property name="targetMethod" value="updateState" />
+	</bean> 
+	
+	
+	<!-- 配置触发器 与job一对一  -->
+	<bean id="statHandleTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="statHandleJob" />
+		<property name="cronExpression" value="0 30 0 * * ? " />
+	</bean>
+
+	<!-- 配置执行定时任务的类和方法 job -->
+	<bean id="statHandleJob"
+		  class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<bean class="com.twi.common.quartz.StatHandleJob" />
+		</property>
+		<property name="targetMethod" value="dataStatistics" />
+	</bean>
+	
+	
+	<!-- 配置触发器 与job一对一  -->
+	<bean id="billHandleTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="billHandleJob" />
+		<property name="cronExpression" value="0 30 10 * * ? " />
+	</bean>
+
+	<!-- 配置执行定时任务的类和方法 job -->
+	<bean id="billHandleJob"
+		  class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<bean class="com.twi.common.quartz.BillHandleJob" />
+		</property>
+		<property name="targetMethod" value="downloadBill" />
+	</bean>
+	
+	<!-- 配置触发器 与job一对一  -->
+	<bean id="checkPayDateTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="checkPayDateJob" />
+		<property name="cronExpression" value="0 0/45 10 * * ? " /> <!-- 每天凌晨2:30 触发 -->
+	</bean>
+
+	<!-- 配置执行定时任务的类和方法 job -->
+	<bean id="checkPayDateJob"
+		  class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<bean class="com.twi.common.quartz.CheckPayDateJob" />
+		</property>
+		<property name="targetMethod" value="checkPayDate" />
+	</bean>
+	
+</beans>
